@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hagur – Iceland Statistics</title>
+  <!-- Apply the saved theme before rendering to avoid a flash -->
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <!-- Font Awesome icons (CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ---------- Variables: light theme ---------- */
+    :root {
+      --bg: #eef3f4;
+      --surface: #ffffff;
+      --surface-2: #e3ecee;
+      --text: #14232b;
+      --muted: #5a6f78;
+      --primary-color: #0f5e75;
+      --primary-hover: #0b4a5c;
+      --on-primary: #ffffff;
+      --accent: #c9602b;
+      --border: #cfdde1;
+      --danger: #b3261e;
+      --danger-bg: #fbeceb;
+      --shadow: 0 1px 2px rgba(20, 35, 43, .06), 0 6px 20px rgba(20, 35, 43, .06);
+      --radius: 14px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-figure: Georgia, "Iowan Old Style", "Times New Roman", serif;
+      color-scheme: light;
+    }
+    /* ---------- Variables: dark theme ---------- */
+    :root[data-theme="dark"] {
+      --bg: #0c161b;
+      --surface: #14232a;
+      --surface-2: #1c313a;
+      --text: #e6eff2;
+      --muted: #93a9b2;
+      --primary-color: #5cc0da;
+      --primary-hover: #86d3e8;
+      --on-primary: #0a1a20;
+      --accent: #f0996a;
+      --border: #2a414b;
+      --danger: #ff8a80;
+      --danger-bg: #3a1e1c;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+      color-scheme: dark;
+    }
+
+    /* ---------- Base (mobile-first) ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.55;
+      transition: background .25s, color .25s;
+    }
+    button, input { font: inherit; color: inherit; }
+    a { color: var(--primary-color); }
+    :focus-visible { outline: 3px solid var(--primary-color); outline-offset: 2px; }
+    .container { width: min(100% - 2rem, 46rem); margin-inline: auto; }
+
+    /* ---------- Header ---------- */
+    .site-header { padding: 1rem 0; border-bottom: 1px solid var(--border); background: var(--surface); transition: background .25s; }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .brand { display: flex; align-items: center; gap: .6rem; font-weight: 700; font-size: 1.1rem; }
+    .brand i { color: var(--primary-color); font-size: 1.3rem; }
+    .brand small { display: none; color: var(--muted); font-weight: 400; }
+    .site-nav { display: flex; align-items: center; gap: .5rem; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      padding: .65rem 1.1rem; border: 1px solid transparent; border-radius: 10px;
+      background: var(--primary-color); color: var(--on-primary); font-weight: 600; cursor: pointer;
+      transition: background .2s, transform .1s, border-color .2s;
+    }
+    .btn:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn:active:not(:disabled) { transform: scale(.97); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface-2); }
+
+    /* ---------- Light / dark switch ---------- */
+    .theme-switch {
+      position: relative; width: 3.4rem; height: 1.9rem; padding: 0;
+      border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); cursor: pointer;
+      transition: background .25s;
+    }
+    .theme-switch .knob {
+      position: absolute; top: 2px; left: 2px; width: calc(1.9rem - 6px); height: calc(1.9rem - 6px);
+      display: grid; place-items: center; border-radius: 50%;
+      background: var(--primary-color); color: var(--on-primary); font-size: .8rem;
+      transition: transform .25s;
+    }
+    .theme-switch[aria-checked="true"] .knob { transform: translateX(1.5rem); }
+    .theme-switch .i-sun { display: block; }
+    .theme-switch .i-moon { display: none; }
+    .theme-switch[aria-checked="true"] .i-sun { display: none; }
+    .theme-switch[aria-checked="true"] .i-moon { display: block; }
+
+    /* ---------- Question area ---------- */
+    main { flex: 1; padding: 2rem 0 3rem; }
+    .hero h1 { margin: 0 0 .4rem; font-size: clamp(1.6rem, 5vw, 2.4rem); line-height: 1.15; letter-spacing: -.02em; }
+    .hero p { margin: 0 0 1.25rem; color: var(--muted); max-width: 60ch; }
+
+    .ask-form {
+      display: flex; flex-direction: column; gap: .6rem; padding: .6rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+      transition: border-color .2s, background .25s;
+    }
+    .ask-form:focus-within { border-color: var(--primary-color); }
+    .ask-form input {
+      flex: 1; min-width: 0; padding: .7rem .8rem; border: 0; background: transparent; font-size: 1rem;
+    }
+    .ask-form input:focus { outline: none; }
+    .ask-form input::placeholder { color: var(--muted); }
+
+    .examples { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+    .chip {
+      padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 999px;
+      background: var(--surface); font-size: .88rem; cursor: pointer; transition: background .2s, border-color .2s;
+    }
+    .chip:hover { background: var(--surface-2); border-color: var(--primary-color); }
+
+    /* ---------- Results ---------- */
+    .feed-head { display: flex; align-items: center; justify-content: space-between; margin: 2rem 0 .75rem; }
+    .feed-head h2 { margin: 0; font-size: 1.1rem; }
+    .feed { display: flex; flex-direction: column; gap: 1rem; padding: 0; margin: 0; list-style: none; }
+    .empty { padding: 1.5rem; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: var(--radius); }
+
+    .card { padding: 1.1rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); animation: pop .25s ease-out; }
+    .card .q { display: flex; gap: .6rem; align-items: baseline; margin: 0 0 .75rem; color: var(--muted); font-size: .92rem; }
+    .card .q i { color: var(--primary-color); }
+    .card .answer { margin: 0; font-family: var(--font-figure); font-size: 1.25rem; line-height: 1.45; }
+    .card .meta { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+    .tag { padding: .2rem .6rem; border-radius: 6px; background: var(--surface-2); font-size: .8rem; }
+    .source { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--border); font-size: .85rem; color: var(--muted); }
+    .source a { overflow-wrap: anywhere; }
+
+    .card.error { border-color: var(--danger); background: var(--danger-bg); }
+    .card.error .answer { font-family: var(--font); font-size: 1rem; color: var(--danger); }
+    .card.error .btn { margin-top: .8rem; }
+
+    /* Loading skeleton */
+    .skeleton { display: flex; flex-direction: column; gap: .6rem; }
+    .skeleton span { height: .9rem; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; }
+    .skeleton span:nth-child(1) { width: 40%; }
+    .skeleton span:nth-child(3) { width: 70%; }
+
+    .site-footer { padding: 1.2rem 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; text-align: center; }
+
+    @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin .8s linear infinite; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+    /* ---------- Wider screens ---------- */
+    @media (min-width: 40rem) {
+      .brand small { display: inline; }
+      .ask-form { flex-direction: row; align-items: center; }
+      main { padding-top: 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+        <span>Hagur <small>Iceland Statistics</small></span>
+      </div>
+      <nav class="site-nav" aria-label="Preferences">
+        <button type="button" class="theme-switch" id="themeSwitch" role="switch" aria-checked="false" aria-label="Dark mode">
+          <span class="knob">
+            <i class="fa-solid fa-sun i-sun" aria-hidden="true"></i>
+            <i class="fa-solid fa-moon i-moon" aria-hidden="true"></i>
+          </span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" aria-labelledby="title">
+      <h1 id="title">Ask a question about Icelandic statistics</h1>
+      <p>Answers come straight from the official Statistics Iceland tables, with the source and the filters used.</p>
+
+      <form class="ask-form" id="askForm" autocomplete="off">
+        <label class="sr-only" for="question">Your question</label>
+        <input id="question" type="text" placeholder="For example: Hver var verðbólga í mars 2024?" required maxlength="300">
+        <button class="btn" id="sendBtn" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Ask</button>
+      </form>
+
+      <ul class="examples" aria-label="Example questions">
+        <li><button type="button" class="chip" data-q="Hver var verðbólga í mars 2024?">Inflation, March 2024</button></li>
+        <li><button type="button" class="chip" data-q="Hver er mannfjöldi á Íslandi 2023?">Population, 2023</button></li>
+        <li><button type="button" class="chip" data-q="Hversu margir fluttu frá Austurlandi til Reykjavíkur 2022?">Migration, East → Reykjavík</button></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="feedTitle">
+      <div class="feed-head">
+        <h2 id="feedTitle">Answers</h2>
+        <button type="button" class="btn btn-ghost" id="clearBtn"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Clear</button>
+      </div>
+      <ol class="feed" id="feed" aria-live="polite">
+        <li class="empty" id="empty">No questions yet. Pick an example or write your own.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">Data: <a href="https://px.hagstofa.is" target="_blank" rel="noopener">Statistics Iceland (PxWeb)</a> · Gagnaþon 2026 project</div>
+  </footer>
+
+  <script>
+    /* =========================================================
+       Configuration: FastAPI backend address.
+       - Page opened from a file (file://) -> local server.
+       - Page served by FastAPI -> relative path (same origin).
+       ========================================================= */
+    const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+    const API_URL = API_BASE + "/spyrja_px_api";
+    const TIMEOUT_MS = 60000;
+
+    // DOM shortcuts
+    const $ = (sel) => document.querySelector(sel);
+    const form = $("#askForm"), input = $("#question"), sendBtn = $("#sendBtn");
+    const feed = $("#feed"), empty = $("#empty"), clearBtn = $("#clearBtn");
+    const themeSwitch = $("#themeSwitch");
+
+    /* ---------- Light / dark mode ---------- */
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      themeSwitch.setAttribute("aria-checked", String(theme === "dark"));
+      try { localStorage.setItem("theme", theme); } catch (e) { /* storage unavailable */ }
+    }
+    themeSwitch.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+    applyTheme(document.documentElement.getAttribute("data-theme"));
+
+    /* ---------- DOM helpers (textContent => no XSS) ---------- */
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    function icon(classes) {
+      const i = el("i", classes);
+      i.setAttribute("aria-hidden", "true");
+      return i;
+    }
+    function setEmptyVisible() {
+      empty.hidden = feed.querySelectorAll(".card").length > 0;
+    }
+
+    /* ---------- Cards ---------- */
+    // Loading card (skeleton) shown while the request runs
+    function createLoadingCard(question) {
+      const card = el("li", "card");
+      const q = el("p", "q");
+      q.append(icon("fa-solid fa-circle-notch spin"), el("span", "", question));
+      const sk = el("div", "skeleton");
+      sk.append(el("span"), el("span"), el("span"));
+      sk.setAttribute("role", "status");
+      sk.setAttribute("aria-label", "Loading answer");
+      card.append(q, sk);
+      return card;
+    }
+
+    // Turns the "notud_sia" filter into readable tags
+    function filterTags(filters) {
+      const ul = el("ul", "meta");
+      (filters || []).forEach((f) => {
+        const values = f && f.selection && Array.isArray(f.selection.values) ? f.selection.values.join(", ") : "";
+        if (f && f.code) ul.append(Object.assign(el("li", "tag", `${f.code} : ${values}`)));
+      });
+      return ul;
+    }
+
+    // Answer card: text, filters used, source and duration
+    function createAnswerCard(question, data, ms) {
+      const card = el("li", "card");
+      const q = el("p", "q");
+      q.append(icon("fa-regular fa-message"), el("span", "", question));
+      card.append(q, el("p", "answer", data.svar || "No answer received."));
+
+      const filters = data["notud_sia"];
+      if (Array.isArray(filters) && filters.length) card.append(filterTags(filters));
+
+      const src = el("div", "source");
+      const url = data["töflu_slóð"];
+      if (url) {
+        const a = el("a", "", "Source table (Statistics Iceland)");
+        a.href = url; a.target = "_blank"; a.rel = "noopener";
+        src.append(icon("fa-solid fa-database"), a);
+      }
+      src.append(icon("fa-regular fa-clock"), el("span", "", `${(ms / 1000).toFixed(1)} s`));
+      card.append(src);
+      return card;
+    }
+
+    // Error card with a "Try again" button
+    function createErrorCard(question, message) {
+      const card = el("li", "card error");
+      const q = el("p", "q");
+      q.append(icon("fa-solid fa-triangle-exclamation"), el("span", "", question));
+      const retry = el("button", "btn btn-ghost", "Try again");
+      retry.type = "button";
+      retry.prepend(icon("fa-solid fa-rotate-right"));
+      retry.addEventListener("click", () => { card.remove(); ask(question); });
+      card.append(q, el("p", "answer", message), retry);
+      return card;
+    }
+
+    /* ---------- Backend call ---------- */
+    async function ask(question) {
+      question = question.trim();
+      if (!question) return;
+
+      sendBtn.disabled = true;
+      const loading = createLoadingCard(question);
+      feed.prepend(loading);
+      setEmptyVisible();
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      const started = performance.now();
+      let card;
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ spurning: question }),
+          signal: controller.signal
+        });
+        if (!res.ok) throw new Error(`The server responded with status ${res.status}.`);
+        const data = await res.json();
+        card = createAnswerCard(question, data, performance.now() - started);
+      } catch (err) {
+        const msg = err.name === "AbortError"
+          ? "The request took more than 60 seconds. Try again with a more specific question."
+          : err instanceof TypeError
+            ? "Cannot reach the server. Check that uvicorn is running on port 8000."
+            : err.message;
+        card = createErrorCard(question, msg);
+      } finally {
+        clearTimeout(timer);
+        loading.replaceWith(card);
+        sendBtn.disabled = false;
+        setEmptyVisible();
+      }
+    }
+
+    /* ---------- Events ---------- */
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = input.value;
+      input.value = "";
+      ask(q);
+    });
+
+    // Example chips send their question right away
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => ask(chip.dataset.q));
+    });
+
+    clearBtn.addEventListener("click", () => {
+      feed.querySelectorAll(".card").forEach((c) => c.remove());
+      setEmptyVisible();
+    });
+  </script>
+</body>
+</html>
