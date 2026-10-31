@@ -5,6 +5,8 @@ import requests
 import unicodedata
 import re
 
+#J'aime les avocats
+
 app = FastAPI(title="Statistics Iceland Smart API Server")
 
 # Allow any web frontend to call this API (fine for a hackathon, too open for production)
