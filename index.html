@@ -145,7 +145,7 @@
     .card { padding: 1.1rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); animation: pop .25s ease-out; }
     .card .q { display: flex; gap: .6rem; align-items: baseline; margin: 0 0 .75rem; color: var(--muted); font-size: .92rem; }
     .card .q i { color: var(--primary-color); }
-    .card .answer { margin: 0; font-family: var(--font-figure); font-size: 1.25rem; line-height: 1.45; }
+    .card .answer { margin: 0; font-family: var(--font-figure); font-size: 1.25rem; line-height: 1.45; white-space: pre-line; }
     .card .meta { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
     .tag { padding: .2rem .6rem; border-radius: 6px; background: var(--surface-2); font-size: .8rem; }
     .source { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--border); font-size: .85rem; color: var(--muted); }
@@ -203,14 +203,14 @@
 
       <form class="ask-form" id="askForm" autocomplete="off">
         <label class="sr-only" for="question">Your question</label>
-        <input id="question" type="text" placeholder="For example: Hver var verðbólga í mars 2024?" required maxlength="300">
+        <input id="question" type="text" placeholder="For example: What was the inflation in March 2024?" required maxlength="300">
         <button class="btn" id="sendBtn" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Ask</button>
       </form>
 
       <ul class="examples" aria-label="Example questions">
-        <li><button type="button" class="chip" data-q="Hver var verðbólga í mars 2024?">Inflation, March 2024</button></li>
-        <li><button type="button" class="chip" data-q="Hver er mannfjöldi á Íslandi 2023?">Population, 2023</button></li>
-        <li><button type="button" class="chip" data-q="Hversu margir fluttu frá Austurlandi til Reykjavíkur 2022?">Migration, East → Reykjavík</button></li>
+        <li><button type="button" class="chip" data-q="What was the inflation in March 2024?">Inflation, March 2024</button></li>
+        <li><button type="button" class="chip" data-q="What was the population of Iceland in 2023?">Population, 2023</button></li>
+        <li><button type="button" class="chip" data-q="How many people moved from East to the capital area in 2022?">Migration, East → Capital area</button></li>
       </ul>
     </section>
 
@@ -236,7 +236,7 @@
        - Page served by FastAPI -> relative path (same origin).
        ========================================================= */
     const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
-    const API_URL = API_BASE + "/spyrja_px_api";
+    const API_URL = API_BASE + "/ask";
     const TIMEOUT_MS = 60000;
 
     // DOM shortcuts
@@ -287,7 +287,7 @@
       return card;
     }
 
-    // Turns the "notud_sia" filter into readable tags
+    // Turns the "filters" list into readable tags
     function filterTags(filters) {
       const ul = el("ul", "meta");
       (filters || []).forEach((f) => {
@@ -302,13 +302,13 @@
       const card = el("li", "card");
       const q = el("p", "q");
       q.append(icon("fa-regular fa-message"), el("span", "", question));
-      card.append(q, el("p", "answer", data.svar || "No answer received."));
+      card.append(q, el("p", "answer", data.answer || "No answer received."));
 
-      const filters = data["notud_sia"];
+      const filters = data.filters;
       if (Array.isArray(filters) && filters.length) card.append(filterTags(filters));
 
       const src = el("div", "source");
-      const url = data["töflu_slóð"];
+      const url = data.table_url;
       if (url) {
         const a = el("a", "", "Source table (Statistics Iceland)");
         a.href = url; a.target = "_blank"; a.rel = "noopener";
@@ -351,7 +351,7 @@
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ spurning: question }),
+          body: JSON.stringify({ question }),
           signal: controller.signal
         });
         if (!res.ok) throw new Error(`The server responded with status ${res.status}.`);
