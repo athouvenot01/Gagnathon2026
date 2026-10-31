@@ -8,6 +8,7 @@ import os
 import requests
 import unicodedata
 import hashlib
+import threading
 import time
 import re
 import json
@@ -16,14 +17,22 @@ import traceback
 CATALOG_PATH = Path(__file__).parent / "hagstofa_catalog.json"
 REQUIRED_KEYS = {"table_id", "title_en", "api_url", "keywords", "dimensions"}
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")  # e.g. the DGX Spark: http://<ip>:11434
-EMBEDDING_MODEL = "bge-m3"
-EMBEDDINGS_PATH = Path(__file__).parent / "catalog_embeddings.npz"  # cache: computing them takes ~20 min on CPU
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+
+# Embedding backend, chosen with the EMBEDDING_BACKEND environment variable:
+#   "ollama" (default): bge-m3 served by Ollama (works on CPU, e.g. a laptop)
+#   "local": BAAI/bge-m3 loaded in Python with sentence-transformers (uses the GPU, e.g. the DGX Spark)
+EMBEDDING_BACKEND = os.environ.get("EMBEDDING_BACKEND", "ollama")
+EMBEDDING_MODEL = {"ollama": "bge-m3", "local": "BAAI/bge-m3"}[EMBEDDING_BACKEND]
+# One cache file per backend (their vectors differ slightly); computing them takes ~20 min on CPU
+EMBEDDINGS_PATH = Path(__file__).parent / f"catalog_embeddings_{EMBEDDING_BACKEND}.npz"
 EMBEDDING_BATCH = 32
 
 # Filled once at startup, then only read by the requests.
 CATALOG = []             # list of tables (dicts from the JSON)
 TABLE_EMBEDDINGS = None  # numpy array (n_tables, 1024), row i = CATALOG[i], rows normalised to length 1
+LOCAL_MODEL = None       # SentenceTransformer, only with EMBEDDING_BACKEND=local
+LOCAL_MODEL_LOCK = threading.Lock()  # FastAPI runs requests in threads: one GPU encode at a time
 
 
 def load_catalog():
@@ -43,8 +52,21 @@ def load_catalog():
     print(f"[catalog] {len(CATALOG)} tables loaded into RAM ({len(raw) - len(CATALOG)} skipped: duplicates or invalid)")
 
 
+def load_embedding_model():
+    """With the local backend, load BAAI/bge-m3 once (downloaded from Hugging Face on the first run)."""
+    global LOCAL_MODEL
+    if EMBEDDING_BACKEND == "local":
+        from sentence_transformers import SentenceTransformer  # only installed where the local backend is used
+        LOCAL_MODEL = SentenceTransformer(EMBEDDING_MODEL)  # picks the GPU (cuda) when available
+        print(f"[embeddings] {EMBEDDING_MODEL} loaded on {LOCAL_MODEL.device}")
+
+
 def embed(texts):
-    """Embed a list of texts with Ollama; returns an array of unit-length vectors."""
+    """Embed a list of texts; returns an array of unit-length vectors."""
+    if EMBEDDING_BACKEND == "local":
+        with LOCAL_MODEL_LOCK:
+            return LOCAL_MODEL.encode(texts, batch_size=EMBEDDING_BATCH, normalize_embeddings=True,
+                                      convert_to_numpy=True).astype(np.float32)
     res = requests.post(f"{OLLAMA_URL}/api/embed", json={"model": EMBEDDING_MODEL, "input": texts}, timeout=600)
     res.raise_for_status()
     vectors = np.array(res.json()["embeddings"], dtype=np.float32)
@@ -72,7 +94,8 @@ def load_embeddings():
             TABLE_EMBEDDINGS = cache["vectors"]
             print(f"[embeddings] {len(TABLE_EMBEDDINGS)} table embeddings loaded from {EMBEDDINGS_PATH.name}")
             return
-    print(f"[embeddings] computing {len(texts)} table embeddings with {EMBEDDING_MODEL} (one-time, can take ~20 min on CPU)...")
+    print(f"[embeddings] computing {len(texts)} table embeddings with {EMBEDDING_MODEL} "
+          f"(one-time; ~20 min on CPU, much faster on GPU)...")
     start = time.time()
     TABLE_EMBEDDINGS = np.vstack([embed(texts[i:i + EMBEDDING_BATCH]) for i in range(0, len(texts), EMBEDDING_BATCH)])
     np.savez(EMBEDDINGS_PATH, vectors=TABLE_EMBEDDINGS, digest=digest)
@@ -82,6 +105,7 @@ def load_embeddings():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     load_catalog()     # runs once, before the server accepts requests
+    load_embedding_model()
     load_embeddings()
     yield              # the server runs here
     # code after yield would run at shutdown (nothing to clean up)
