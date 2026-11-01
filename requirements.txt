@@ -2,8 +2,3 @@ fastapi
 uvicorn
 requests
 pydantic
-numpy
-
-# Only for EMBEDDING_BACKEND=local (GPU, e.g. DGX Spark). Install torch for your CUDA version first, see pytorch.org:
-#   pip install torch --index-url https://download.pytorch.org/whl/cu130
-#   pip install sentence-transformers
