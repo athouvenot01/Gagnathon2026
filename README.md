@@ -105,3 +105,6 @@ __pycache__/
 
 ## 🧪 Example Prompts & Testing
 
+4. Museum Visits
+   Question: "How many museum visits were recorded in 2021?
+
