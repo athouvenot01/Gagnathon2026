@@ -147,6 +147,9 @@
     .card .q i { color: var(--primary-color); }
     .card .answer { margin: 0; font-family: var(--font-figure); font-size: 1.25rem; line-height: 1.45; white-space: pre-line; }
     .card .meta { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+    .values { margin-top: .8rem; font-size: .85rem; color: var(--muted); }
+    .values summary { cursor: pointer; }
+    .values pre { margin: .5rem 0 0; padding: .6rem .8rem; background: var(--surface-2); border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
     .tag { padding: .2rem .6rem; border-radius: 6px; background: var(--surface-2); font-size: .8rem; }
     .source { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--border); font-size: .85rem; color: var(--muted); }
     .source a { overflow-wrap: anywhere; }
@@ -304,16 +307,29 @@
       q.append(icon("fa-regular fa-message"), el("span", "", question));
       card.append(q, el("p", "answer", data.answer || "No answer received."));
 
-      const filters = data.filters;
-      if (Array.isArray(filters) && filters.length) card.append(filterTags(filters));
+      // Sentence written by the LLM: the raw values stay available to check it
+      if (data.llm && data.values) {
+        const details = el("details", "values");
+        details.append(el("summary", "", `Values from the table (sentence by ${data.llm.model})`),
+                       el("pre", "", data.values));
+        card.append(details);
+      }
+
+      // One question can use several tables: filters and a source link for each
+      const tables = Array.isArray(data.tables) && data.tables.length ? data.tables
+        : [{ table_id: data.table_id, table_url: data.table_url, filters: data.filters }];
+      tables.forEach((t) => {
+        if (Array.isArray(t.filters) && t.filters.length) card.append(filterTags(t.filters));
+      });
 
       const src = el("div", "source");
-      const url = data.table_url;
-      if (url) {
-        const a = el("a", "", "Source table (Statistics Iceland)");
-        a.href = url; a.target = "_blank"; a.rel = "noopener";
+      tables.forEach((t) => {
+        if (!t.table_url) return;
+        const label = tables.length > 1 ? `Source: ${t.table_id}` : "Source table (Statistics Iceland)";
+        const a = el("a", "", label);
+        a.href = t.table_url; a.target = "_blank"; a.rel = "noopener";
         src.append(icon("fa-solid fa-database"), a);
-      }
+      });
       src.append(icon("fa-regular fa-clock"), el("span", "", `${(ms / 1000).toFixed(1)} s`));
       card.append(src);
       return card;
