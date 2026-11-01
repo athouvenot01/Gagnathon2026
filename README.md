@@ -60,21 +60,13 @@ Once your environment is set up and `app.py` is in place, start the FastAPI serv
 
 ```
 uvicorn app:app --reload
+index.html
 ```
 
 * The server will run at: `http://127.0.0.1:8000`
 * Interactive API Documentation (Swagger UI): `http://127.0.0.1:8000/docs`
 * ReDoc Documentation: `http://127.0.0.1:8000/redoc`
 
-## 🔍 Testing the PxWeb API Endpoint via `curl`
-
-You can test the dynamic query endpoint using `curl` to fetch live data directly through the backend:
-
-```
-curl -X POST "http://127.0.0.1:8000/query" \
-     -H "Content-Type: application/json" \
-     -d '{"prompt": "Get population statistics for municipalities in 2024"}'
-```
 
 ## 🛑 `.gitignore`
 
@@ -85,3 +77,5 @@ venv/
 __pycache__/
 *.pyc
 .env
+```
+
