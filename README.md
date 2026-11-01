@@ -39,7 +39,7 @@ pandas
 
 ### System Requirements & Preparation:
 1. **Python 3.10+** installed on your machine.
-2. An active internet connection to communicate live with the Statistics Iceland PxWeb API (`https://px.hagstofa.is/pxis/api/v1/is/`).
+2. An active internet connection to communicate live with the Statistics Iceland PxWeb API (`https://px.hagstofa.is/pxen/api/v1/en/`).
 
 ## 📂 GitHub Repository Structure
 
@@ -51,7 +51,10 @@ hagstofa-ai-track2/
 ├── app.py                      # Main FastAPI application & PxWeb API integration
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # This documentation file
+├── index.html                  # Frontend
+├── examples.jsonl              # File to see how good the classification with the keywords work
 └── .gitignore                  # Files/folders to ignore in Git
+
 ```
 
 ## ⚙️ Step 1: Environment Setup
@@ -83,12 +86,21 @@ Once your environment is set up and `app.py` is in place, start the FastAPI serv
 
 ```
 uvicorn app:app --reload
-index.html
 ```
 
 * The server will run at: `http://127.0.0.1:8000`
 * Interactive API Documentation (Swagger UI): `http://127.0.0.1:8000/docs`
 * ReDoc Documentation: `http://127.0.0.1:8000/redoc`
+
+
+
+## 🧪 Example Prompts & Testing
+
+1. **Museum Visits**: How many museum visits were recorded in 2021?
+2. **Hospital Beds**: How many hospital beds were available in 2020?
+3. **Fish Catch Statistics**: What was the total catch of cod in 2022?
+4. **Concerts in Harpa**: How many concerts were held in Harpa in 2017?
+
 
 
 ## 🛑 `.gitignore`
@@ -101,10 +113,4 @@ __pycache__/
 *.pyc
 .env
 ```
-
-
-## 🧪 Example Prompts & Testing
-
-4. Museum Visits
-   Question: "How many museum visits were recorded in 2021?
 
